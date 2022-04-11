@@ -1,13 +1,15 @@
 import Head from 'next/head';
-import { HomePageProducts } from '../helpers/HomepageQueries';
-import client from '../helpers/apolloClient';
-import PostCard from '../components/PostCard';
+import { useQuery } from 'react-query';
+import { getHomepageProducts } from '../queries/queries';
+
 import ProductCard from '../components/ProductCard';
+import Filters from '../components/Filters';
 
-export default function Home({ products }) {
+export default function Home() {
 
+	const {status, data: products, error, isFetching, isSuccess} = useQuery("products", async () => await getHomepageProducts());
 	console.log(products);
-
+	
 	return (
 		<div className="max-w-2xl mx-auto py-16 px-4 sm:py-24 sm:px-6 lg:max-w-7xl lg:px-8">
 			<Head>
@@ -18,28 +20,13 @@ export default function Home({ products }) {
 
 			<h2 className="text-2xl font-extrabold tracking-tight text-gray-900">Latest products</h2>
 
-			<div className="mt-6 grid grid-cols-1 gap-y-10 gap-x-6 sm:grid-cols-2 lg:grid-cols-3 xl:gap-x-8">
+			{/* <Filters categories={categories} getSelectedCategories={getSelectedCategories}/> */}
+
+			{/* <div className="mt-6 grid grid-cols-1 gap-y-10 gap-x-6 sm:grid-cols-2 lg:grid-cols-3 xl:gap-x-8">
 				{products.map((product, i) => (
 					<ProductCard key={i} product={product} />
 				))}
-			</div>
+			</div> */}
 		</div>
 	)
 }
-
-export async function getStaticProps() {
-	const { data } = await client.query({
-		query: HomePageProducts
-	})
-
-	const { products } = data;
-
-	console.log(products);
-
-	return {
-		props: {
-			products
-		}
-	}
-}
-
