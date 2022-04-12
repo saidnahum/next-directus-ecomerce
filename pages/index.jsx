@@ -1,15 +1,44 @@
 import Head from 'next/head';
 import { useQuery } from 'react-query';
-import { getHomepageProducts } from '../queries/queries';
-
+import getData from '../queries/getData';
+import { HomepageCategoriesQuery, HomepageFilteredProductsQuery, HomepageProductsQuery } from '../queries/HomepageQueries';
 import ProductCard from '../components/ProductCard';
 import Filters from '../components/Filters';
+import { useState, useEffect } from 'react';
+
+async function handleProductsFiltering({queryKey}){
+	console.log(queryKey);
+	const [_] = queryKey;
+
+	if(_.length > 0){
+		return await getData(HomepageFilteredProductsQuery, "products", { categories: queryKey[0] });
+	}
+
+	return await getData(HomepageProductsQuery, "products");
+}
 
 export default function Home() {
 
-	const {status, data: products, error, isFetching, isSuccess} = useQuery("products", async () => await getHomepageProducts());
-	console.log(products);
+	const [selectedCategories, setSelectedCategories] = useState([]);
+
+	// Queries
+	const { data: products, isSuccess: productsSuccess } = useQuery([selectedCategories], handleProductsFiltering);
+	const { data: categories, isSuccess: categoriesSuccess } = useQuery("categories", async () => await getData(HomepageCategoriesQuery, "categories"));
+
+	const getSelectedCategories = (category) => {
+		
+		if(selectedCategories.includes(category)){
+			setSelectedCategories(selectedCategories.filter(item => item !== category))
+			return
+		}
+		setSelectedCategories([...selectedCategories, category])
+	}
+
+	useEffect(() => {
+		console.log(selectedCategories);
+	}, [selectedCategories])
 	
+
 	return (
 		<div className="max-w-2xl mx-auto py-16 px-4 sm:py-24 sm:px-6 lg:max-w-7xl lg:px-8">
 			<Head>
@@ -20,13 +49,17 @@ export default function Home() {
 
 			<h2 className="text-2xl font-extrabold tracking-tight text-gray-900">Latest products</h2>
 
-			{/* <Filters categories={categories} getSelectedCategories={getSelectedCategories}/> */}
+			{categoriesSuccess && (
+				<Filters categories={categories} getSelectedCategories={getSelectedCategories} />
+			)}
 
-			{/* <div className="mt-6 grid grid-cols-1 gap-y-10 gap-x-6 sm:grid-cols-2 lg:grid-cols-3 xl:gap-x-8">
-				{products.map((product, i) => (
-					<ProductCard key={i} product={product} />
-				))}
-			</div> */}
+			<div className="mt-6 grid grid-cols-1 gap-y-10 gap-x-6 sm:grid-cols-2 lg:grid-cols-3 xl:gap-x-8">
+				{productsSuccess && (
+					products.map((product, i) => (
+						<ProductCard key={i} product={product} />
+					))
+				)}
+			</div>
 		</div>
 	)
 }
